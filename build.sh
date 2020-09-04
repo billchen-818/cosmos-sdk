@@ -3,10 +3,15 @@
 set -uex
 
 declare -A OS_ARCHS
-OS_ARCHS[linux]='amd64 arm64'
-OS_ARCHS[darwin]='amd64'
-OS_ARCHS[windows]='amd64'
-export GO111MODULE=on
+if [[ "${TARGET_OS}" =~ linux ]]; then
+    OS_ARCHS[linux]='amd64 arm64'
+fi
+if [[ "${TARGET_OS}" =~ darwin ]]; then
+    OS_ARCHS[darwin]='amd64'
+fi
+if [[ "${TARGET_OS}" =~ windows ]]; then
+    OS_ARCHS[windows]='amd64'
+fi
 
 TEMPDIR="$(mktemp -d)"
 
