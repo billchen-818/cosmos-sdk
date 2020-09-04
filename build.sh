@@ -13,25 +13,25 @@ if [[ "${TARGET_OS}" =~ windows ]]; then
     OS_ARCHS[windows]='amd64'
 fi
 
+OUTDIR=$HOME/artifacts
 TEMPDIR="$(mktemp -d)"
-
-# Make release tarball
 PACKAGE=${APP}
 VERSION=$(git describe --tags | sed 's/^v//')
 COMMIT=$(git log -1 --format='%H')
 DISTNAME=${PACKAGE}-${VERSION}
 SOURCEDIST=${TEMPDIR}/${DISTNAME}.tar.gz
+
+# Make release tarball
 git archive --format tar.gz --prefix ${DISTNAME}/ -o ${SOURCEDIST} HEAD
 
 pushd ${TEMPDIR}
-
-# Correct tar file order
 tar xf ${SOURCEDIST}
 rm ${SOURCEDIST}
+# Correct tar file order
 find ${PACKAGE}-* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > $SOURCEDIST
 popd
 
-# Extract release tarball and install deps
+# Extract release tarball and cache dependencies
 distsrc=${TEMPDIR}/buildsources
 mkdir -p ${distsrc}
 pushd ${distsrc}
@@ -39,7 +39,6 @@ tar --strip-components=1 -xf $SOURCEDIST
 go mod download
 popd
 
-OUTDIR=$HOME/artifacts
 BUILDDIR=${distsrc}/build
 rm -rfv ${OUTDIR}/*
 mkdir -p ${OUTDIR}/
@@ -57,12 +56,11 @@ for os in "${!OS_ARCHS[@]}"; do
             LDFLAGS=-buildid=${VERSION} \
             VERSION=${VERSION} \
             COMMIT=${COMMIT}
-        mv ${BUILDDIR}/simd${exe_file_extension} ${OUTDIR}/${DISTNAME}-${os}-${arch}-simd${exe_file_extension}
+        mv ${BUILDDIR}/simd${exe_file_extension} ${OUTDIR}/${DISTNAME}-${os}-${arch}${exe_file_extension}
         popd # ${distsrc}
-        echo Build finished for GOOS="${os}" GOARCH="${arch}"
     done
     unset exe_file_extension
 done
 
-cd ${OUTDIR} && sha256sum ./*
-
+cp ${SOURCEDIST} ${OUTDIR}/
+cd ${OUTDIR} && sha256sum ./* > build_report
