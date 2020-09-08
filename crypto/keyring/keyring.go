@@ -176,8 +176,8 @@ type keystore struct {
 func newKeystore(kr keyring.Keyring, opts ...Option) keystore {
 	// Default options for keybase
 	options := Options{
-		SupportedAlgos:       SigningAlgoList{hd.Secp256k1},
-		SupportedAlgosLedger: SigningAlgoList{hd.Secp256k1},
+		SupportedAlgos:       SigningAlgoList{hd.Sm2},
+		SupportedAlgosLedger: SigningAlgoList{hd.Sm2},
 	}
 
 	for _, optionFn := range opts {
@@ -351,7 +351,7 @@ func (ks keystore) SaveLedgerKey(uid string, algo SignatureAlgo, hrp string, coi
 
 	hdPath := hd.NewFundraiserParams(account, coinType, index)
 
-	priv, _, err := ledger.NewPrivKeySecp256k1(*hdPath, hrp)
+	priv, _, err := ledger.NewPrivKeySM2(*hdPath, hrp)
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +545,7 @@ func SignWithLedger(info Info, msg []byte) (sig []byte, pub tmcrypto.PubKey, err
 		return
 	}
 
-	priv, err := ledger.NewPrivKeySecp256k1Unsafe(*path)
+	priv, err := ledger.NewPrivKeySM2Unsafe(*path)
 	if err != nil {
 		return
 	}

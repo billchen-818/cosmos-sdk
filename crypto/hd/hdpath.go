@@ -11,6 +11,9 @@ import (
 	"strings"
 
 	"github.com/btcsuite/btcd/btcec"
+	gm "github.com/tjfoc/gmsm/sm2"
+	
+	"github.com/tendermint/tendermint/crypto/sm2"
 )
 
 // BIP44Params wraps BIP 44 params (5 level BIP 32 path).
@@ -215,8 +218,8 @@ func derivePrivateKey(privKeyBytes [32]byte, chainCode [32]byte, index uint32, h
 		data = append([]byte{byte(0)}, privKeyBytes[:]...)
 	} else {
 		// this can't return an error:
-		_, ecPub := btcec.PrivKeyFromBytes(btcec.S256(), privKeyBytes[:])
-		pubkeyBytes := ecPub.SerializeCompressed()
+		_, ecPub := sm2.PrivKeyFromBytes(gm.P256Sm2(), privKeyBytes[:])
+		pubkeyBytes := gm.Compress(ecPub)
 		data = pubkeyBytes
 
 		/* By using btcec, we can remove the dependency on tendermint/crypto/secp256k1

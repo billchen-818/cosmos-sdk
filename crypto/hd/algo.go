@@ -3,6 +3,7 @@ package hd
 import (
 	bip39 "github.com/cosmos/go-bip39"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/sm2"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 )
@@ -20,11 +21,15 @@ const (
 	Ed25519Type = PubKeyType("ed25519")
 	// Sr25519Type represents the Sr25519Type signature system.
 	Sr25519Type = PubKeyType("sr25519")
+
+	Sm2Type = PubKeyType("sm2")
 )
 
 var (
 	// Secp256k1 uses the Bitcoin secp256k1 ECDSA parameters.
 	Secp256k1 = secp256k1Algo{}
+
+	Sm2 = sm2Algo{}
 )
 
 type DeriveFn func(mnemonic string, bip39Passphrase, hdPath string) ([]byte, error)
@@ -67,5 +72,36 @@ func (s secp256k1Algo) Generate() GenerateFn {
 		copy(bzArr, bz)
 
 		return secp256k1.PrivKey(bzArr)
+	}
+}
+type sm2Algo struct {}
+
+func (s sm2Algo) Name() PubKeyType {
+	return Sm2Type
+}
+
+func (s sm2Algo) Derive() DeriveFn {
+	return func(mnemonic string, bip39Passphrase, hdPath string) ([]byte, error) {
+		seed, err := bip39.NewSeedWithErrorChecking(mnemonic, bip39Passphrase)
+		if err != nil {
+			return nil, err
+		}
+
+		masterPriv, ch := ComputeMastersFromSeed(seed)
+		if len(hdPath) == 0 {
+			return masterPriv[:], nil
+		}
+		derivedKey, err := DerivePrivateKeyForPath(masterPriv, ch, hdPath)
+
+		return derivedKey, err
+	}
+}
+
+func (s sm2Algo) Generate() GenerateFn {
+	return func(bz []byte) crypto.PrivKey {
+		var bzArr = make([]byte, sm2.PrivateKeySize)
+		copy(bzArr, bz)
+
+		return sm2.PrivKey(bzArr)
 	}
 }
