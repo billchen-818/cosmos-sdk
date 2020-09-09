@@ -2,7 +2,7 @@ FROM ubuntu:18.04
 
 RUN apt-get update && \
   apt-get -y upgrade && \
-  apt-get -y install curl jq file
+  apt-get -y install apt-utils curl jq file
 
 ARG UID=1000
 ARG GID=1000

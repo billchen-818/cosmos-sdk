@@ -218,7 +218,7 @@ func derivePrivateKey(privKeyBytes [32]byte, chainCode [32]byte, index uint32, h
 		data = append([]byte{byte(0)}, privKeyBytes[:]...)
 	} else {
 		// this can't return an error:
-		_, ecPub := sm2.PrivKeyFromBytes(gm.P256Sm2(), privKeyBytes[:])
+	        _, ecPub := sm2.PrivKeyFromBytes(gm.P256Sm2(), privKeyBytes[:])
 		pubkeyBytes := gm.Compress(ecPub)
 		data = pubkeyBytes
 

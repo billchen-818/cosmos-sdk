@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/tendermint/tendermint/crypto/sm2"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -18,8 +18,8 @@ import (
 
 var (
 	// simulation signature values used to estimate gas consumption
-	simSecp256k1Pubkey = make(secp256k1.PubKey, secp256k1.PubKeySize)
-	simSecp256k1Sig    [64]byte
+	simSm2Pubkey = make(sm2.PubKey, sm2.PubKeySize)
+	simSm2Sig    [64]byte
 
 	_ authsigning.SigVerifiableTx = (*types.StdTx)(nil) // assert StdTx implements SigVerifiableTx
 )
@@ -27,7 +27,7 @@ var (
 func init() {
 	// This decodes a valid hex string into a sepc256k1Pubkey for use in transaction simulation
 	bz, _ := hex.DecodeString("035AD6810A47F073553FF30D2FCC7E0D3B1C0B74B61A1AAA2582344037151E143A")
-	copy(simSecp256k1Pubkey, bz)
+	copy(simSm2Pubkey, bz)
 }
 
 // SignatureVerificationGasConsumer is the type of function that is used to both
@@ -63,7 +63,7 @@ func (spkd SetPubKeyDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate b
 			if !simulate {
 				continue
 			}
-			pk = simSecp256k1Pubkey
+			pk = simSm2Pubkey
 		}
 		// Only make check if simulate=false
 		if !simulate && !bytes.Equal(pk.Address(), signers[i]) {
@@ -134,7 +134,7 @@ func (sgcd SigGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 		// shall consume the largest amount, i.e. it takes more gas to verify
 		// secp256k1 keys than ed25519 ones.
 		if simulate && pubKey == nil {
-			pubKey = simSecp256k1Pubkey
+			pubKey = simSm2Pubkey
 		}
 
 		// make a SignatureV2 with PubKey filled in from above
@@ -337,8 +337,8 @@ func DefaultSigVerificationGasConsumer(
 		meter.ConsumeGas(params.SigVerifyCostED25519, "ante verify: ed25519")
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidPubKey, "ED25519 public keys are unsupported")
 
-	case secp256k1.PubKey:
-		meter.ConsumeGas(params.SigVerifyCostSecp256k1, "ante verify: secp256k1")
+	case sm2.PubKey:
+		meter.ConsumeGas(params.SigVerifyCostSM2, "ante verify: sm2")
 		return nil
 
 	case multisig.PubKey:
